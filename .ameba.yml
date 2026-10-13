@@ -1,0 +1,9 @@
+# Configuration d'Ameba pour partiduo-backup.
+Globs:
+  - "**/*.cr"
+  - "!lib"
+  - "!tmp"
+
+Excluded:
+  - lib/
+  - tmp/

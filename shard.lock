@@ -1,0 +1,10 @@
+version: 2.0
+shards:
+  ameba:
+    git: https://github.com/crystal-ameba/ameba.git
+    version: 1.7.0
+
+  jose:
+    git: https://github.com/aloli-crystal/jose.git
+    version: 0.2.0
+

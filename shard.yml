@@ -1,5 +1,5 @@
 name: partiduo-backup
-version: 0.1.0
+version: 0.1.1
 
 description: |
   Format des sauvegardes de Partiduo, partagé par l'exécutant de
@@ -22,3 +22,8 @@ dependencies:
   jose:
     github: aloli-crystal/jose
     version: "~> 0.2"
+
+development_dependencies:
+  ameba:
+    github: crystal-ameba/ameba
+    version: "~> 1.6"

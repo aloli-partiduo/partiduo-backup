@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# CI de partiduo-backup (format des sauvegardes) : verrou, format, Ameba,
+# specs avec les outils officiels (age 1.3, ssh-keygen, openssl).
+name: CI
+
+on:
+  push:
+    branches: [development, production]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  specs:
+    name: Format, Ameba, specs
+    runs-on: ubuntu-latest
+    container: crystallang/crystal:1.19.1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verrou sans dépendance « path » (exigé par les ports FreeBSD)
+        run: "! grep -q 'path:' shard.lock"
+      - name: Format
+        run: crystal tool format --check src spec
+      - name: Outils (ssh-keygen, curl)
+        run: apt-get update && apt-get install -y --no-install-recommends openssh-client curl ca-certificates
+      - name: age 1.3 (le paquet d'Ubuntu est trop ancien)
+        run: |
+          curl -sSfL -o /tmp/age.tar.gz https://github.com/FiloSottile/age/releases/download/v1.3.2/age-v1.3.2-linux-amd64.tar.gz
+          echo "cbe24006683f8eb669266162894b9a522a1af52f2665fbc63a4bb032ed26ac10  /tmp/age.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/age.tar.gz -C /usr/local/bin --strip-components=1 age/age age/age-keygen age/age-inspect
+          age --version
+      - name: Shards
+        run: shards install
+      - name: Ameba
+        run: mkdir -p bin && crystal build lib/ameba/bin/ameba.cr -o bin/ameba && bin/ameba
+      - name: Specs
+        run: crystal spec --order random
