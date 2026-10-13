@@ -1,0 +1,8 @@
+.DS_Store
+*.dwarf
+/.shards/
+/lib/
+/bin/
+/tmp/
+# Override local du développement, jamais versionné.
+/shard.override.yml

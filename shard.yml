@@ -1,0 +1,24 @@
+name: partiduo-backup
+version: 0.1.0
+
+description: |
+  Format des sauvegardes de Partiduo, partagé par l'exécutant de
+  partiduo-admin (serveurs) et la commande partiduo de partiduo-dist
+  (dossiers locaux) : fichiers age post-quantiques, clé de sauvegarde par
+  sauvegarde gardée dans une capsule (clés d'exploitation ou clé du
+  cabinet), manifeste signé par la clé du serveur ou du poste, stockage
+  en écriture unique (DECISIONS D-CHF-013 à D-CHF-025, D-LOC-006 de
+  partiduo-app).
+
+authors:
+  - Philippe Nénert <it+claude.ai@aloli.fr>
+
+crystal: ">= 1.19.1"
+
+license: AGPL-3.0-or-later
+
+dependencies:
+  # Liaisons de libcrypto (EVP_PKEY) : clé RSA-OAEP du cabinet.
+  jose:
+    github: aloli-crystal/jose
+    version: "~> 0.2"

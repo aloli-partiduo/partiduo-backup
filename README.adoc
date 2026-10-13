@@ -1,0 +1,28 @@
+= partiduo-backup
+:icons: font
+
+Format des sauvegardes de Partiduo, partagé par :
+
+* l'exécutant `partiduo-agent` de `partiduo-admin`, sur les serveurs ;
+* la commande `partiduo` de `partiduo-dist`, pour les dossiers tenus sur un
+  poste, sans serveur.
+
+Une sauvegarde prise sur un serveur se restaure sur un poste, et
+inversement.
+
+* Base et pièces jointes : fichiers `age` (C2SP `age-encryption.org/v1`),
+  chiffrés pour une clé de sauvegarde post-quantique propre à la
+  sauvegarde.
+* Capsule : la clé de sauvegarde, chiffrée pour les clés d'exploitation
+  (`age`) ou pour la clé du cabinet (RSA-OAEP).
+* Manifeste texte signé (`sshsig`, Ed25519) par la clé du serveur ou du
+  poste.
+* Stockage en écriture unique, `<serveur>/<dossier>/<fichier>`.
+
+Décisions : D-CHF-013 à D-CHF-025 et D-LOC-006 de `partiduo-app`
+(`DECISIONS.adoc`). Outils requis à l'exécution : `age` 1.3 ou suivant
+(`age`, `age-keygen`, `age-inspect`), `ssh-keygen`, OpenSSL 3.
+
+== Licence
+
+AGPL-3.0-or-later.
