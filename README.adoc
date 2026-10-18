@@ -21,7 +21,9 @@ inversement.
 
 Décisions : D-CHF-013 à D-CHF-025 et D-LOC-006 de `partiduo-app`
 (`DECISIONS.adoc`). Outils requis à l'exécution : `age` 1.3 ou suivant
-(`age`, `age-keygen`, `age-inspect`), `ssh-keygen`, OpenSSL 3.
+(`age`, `age-keygen`), `ssh-keygen`, OpenSSL 3. L'en-tête des fichiers `age`
+est lu par le shard lui-même : `age-inspect` n'est pas requis (le port
+FreeBSD security/age ne l'installe pas).
 
 == Licence
 

@@ -184,20 +184,55 @@ module PartiduoBackup
       raise Error.new("clés d'exploitation illisibles : #{ex.message}")
     end
 
-    # Structure d'un fichier `age` sans clé (`age-inspect`) : format v1,
-    # post-quantique, un seul destinataire de type `mlkem768x25519` (la clé
-    # de sauvegarde). N'authentifie pas le contenu : seule la clé le peut.
+    # Structure d'un fichier `age` sans clé : format v1, post-quantique, un
+    # seul destinataire de type `mlkem768x25519` (la clé de sauvegarde).
+    # N'authentifie pas le contenu : seule la clé le peut.
+    #
+    # L'en-tête est lu ici (spécification age-encryption.org/v1 : ligne de
+    # version, une strophe `-> type arguments` par destinataire suivie de son
+    # corps en base64, ligne `--- mac`), sans `age-inspect` : le port FreeBSD
+    # security/age 1.3.2 ne l'installe pas (loulou, 18 octobre 2026).
+    # Rend les mêmes champs que `age-inspect --json` (version, postquantum,
+    # stanza_types).
     def self.check_structure(path : String) : JSON::Any
-      info = JSON.parse(String.new(run!("age-inspect", ["--json", path])))
+      name = File.basename(path)
+      info = inspect_header(path)
       unless info["version"]?.try(&.as_s?) == "age-encryption.org/v1"
-        raise Error.new("#{File.basename(path)} : ce n'est pas un fichier age")
+        raise Error.new("#{name} : ce n'est pas un fichier age")
       end
       unless info["postquantum"]?.try(&.as_s?) == "yes" && info["stanza_types"]?.try(&.as_a?).try(&.map(&.as_s?)) == [STANZA]
-        raise Error.new("#{File.basename(path)} : destinataire inattendu (une clé de sauvegarde post-quantique attendue)")
+        raise Error.new("#{name} : destinataire inattendu (une clé de sauvegarde post-quantique attendue)")
       end
       info
-    rescue ex : JSON::ParseException
-      raise Error.new("age-inspect illisible : #{ex.message}")
+    end
+
+    # Taille maximale lue pour trouver la fin de l'en-tête (`--- `) : un
+    # en-tête à un destinataire post-quantique tient en quelques Ko.
+    HEADER_LIMIT = 64 * 1024
+
+    def self.inspect_header(path : String) : JSON::Any
+      name = File.basename(path)
+      types = [] of String
+      version = ""
+      complete = false
+      File.open(path) do |file|
+        reader = IO::Sized.new(file, HEADER_LIMIT)
+        version = reader.gets(chomp: true) || ""
+        while line = reader.gets(chomp: true)
+          if line.starts_with?("--- ")
+            complete = true
+            break
+          end
+          types << (line.split(' ')[1]? || "") if line.starts_with?("-> ")
+        end
+      end
+      raise Error.new("#{name} : en-tête age incomplet ou trop long") if version == "age-encryption.org/v1" && !complete
+      postquantum = !types.empty? && types.all?(STANZA) ? "yes" : "no"
+      JSON::Any.new({"version"      => JSON::Any.new(version),
+                     "postquantum"  => JSON::Any.new(postquantum),
+                     "stanza_types" => JSON::Any.new(types.map { |type| JSON::Any.new(type) })})
+    rescue ex : File::Error
+      raise Error.new("#{name} : illisible (#{ex.message})")
     end
 
     # Rappel de mot de passe pour les PEM chiffrés : la phrase de passe est

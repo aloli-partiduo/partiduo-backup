@@ -5,7 +5,7 @@ require "./spec_helper"
 # Format des sauvegardes (D-CHF-013 à D-CHF-025 de partiduo-app), sans base
 # ni réseau : clés de sauvegarde post-quantiques et fichiers `age` en flux,
 # capsules, manifeste signé, stockage en écriture unique. Les outils
-# officiels (`age`, `age-keygen`, `age-inspect`, `ssh-keygen`, `openssl`)
+# officiels (`age`, `age-keygen`, `ssh-keygen`, `openssl` ; `age-inspect`, s'il est là, pour comparer)
 # servent de seconde implémentation : ce que ce shard écrit, ils le relisent.
 
 private alias Crypto = PartiduoBackup::Crypto
@@ -99,6 +99,18 @@ describe "Sauvegardes : clés et fichiers age (D-CHF-013, D-CHF-014)" do
     text = File.join(directory, "texte.age")
     File.write(text, "PDUOBAK ancien format")
     expect_raises(Crypto::Error) { Crypto.check_structure(text) }
+    # En-tête tronqué (pas de ligne `--- `) : refusé.
+    cut = File.join(directory, "tronque.age")
+    File.write(cut, File.read(two).lines(chomp: false).first(2).join)
+    expect_raises(Crypto::Error, /incomplet/) { Crypto.check_structure(cut) }
+    # Mêmes champs que `age-inspect --json` quand il est installé (macOS).
+    if Process.find_executable("age-inspect")
+      [two, old].each do |file|
+        official = JSON.parse(String.new(Crypto.run!("age-inspect", ["--json", file])))
+        ours = Crypto.inspect_header(file)
+        %w[version postquantum stanza_types].each { |key| ours[key].should eq(official[key]) }
+      end
+    end
   end
 end
 
